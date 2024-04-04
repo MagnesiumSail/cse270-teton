@@ -1,39 +1,40 @@
 import pytest
 import requests
-import responses
 
-@responses.activate
-def test_user_authentication_unauthorized():
-    # Mock the server response for unauthorized access
-    url = "http://127.0.0.1:8000/users"
-    responses.add(responses.GET, url, json={}, status=401)
+class MockResponse:
+    # Mocking the requests.Response object
+    def __init__(self, json_data, status_code):
+        self.json_data = json_data
+        self.status_code = status_code
+        self.text = json_data if isinstance(json_data, str) else ""
+
+    def json(self):
+        return self.json_data
+
+def mock_requests_get_unauthorized(url, params=None, **kwargs):
+    return MockResponse("", 401)  # Return an empty string and status code 401 for unauthorized access
+
+def mock_requests_get_authorized(url, params=None, **kwargs):
+    return MockResponse("", 200)  # Return an empty string and status code 200 for authorized access
+
+def test_user_authentication_unauthorized(mocker):
+    mocker.patch('requests.get', side_effect=mock_requests_get_unauthorized)
     
-    # Define the parameters for the unauthorized case
+    url = "http://127.0.0.1:8000/users"
     params = {'username': 'admin', 'password': 'admin'}
     
-    # Make the GET request with the parameters
     response = requests.get(url, params=params)
     
-    # Assert that the status code is 401 for unauthorized access
     assert response.status_code == 401, "Expected HTTP status code 401"
-    
-    # Optionally, assert the response body is empty for the unauthorized case
-    assert response.text == "{}", "Expected an empty JSON response body for unauthorized access"
+    assert response.text == "", "Expected an empty response body for unauthorized access"
 
-@responses.activate
-def test_user_authentication_authorized_empty_response():
-    # Mock the server response for authorized access
-    url = "http://127.0.0.1:8000/users"
-    responses.add(responses.GET, url, json={}, status=200)
+def test_user_authentication_authorized_empty_response(mocker):
+    mocker.patch('requests.get', side_effect=mock_requests_get_authorized)
     
-    # Define the parameters for the authorized case
+    url = "http://127.0.0.1:8000/users"
     params = {'username': 'admin', 'password': 'qwerty'}
     
-    # Make the GET request with the new parameters
     response = requests.get(url, params=params)
     
-    # Assert that the status code is 200 for authorized access
     assert response.status_code == 200, "Expected HTTP status code 200"
-    
-    # Optionally, assert the response body is empty for the authorized case
-    assert response.text == "{}", "Expected an empty JSON response body for authorized access"
+    assert response.text == "", "Expected an empty response body for authorized access"
