@@ -31,7 +31,7 @@ def test_user_authentication_unauthorized(mocker):
 def test_user_authentication_authorized_empty_response(mocker):
     mocker.patch('requests.get', side_effect=mock_requests_get_authorized)
     
-    url = "http://127.0.0.1:8000/users"
+    url = "http://127.0.0.1:5500/users"
     params = {'username': 'admin', 'password': 'qwerty'}
     
     response = requests.get(url, params=params)
